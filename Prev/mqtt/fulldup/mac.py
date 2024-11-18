@@ -6,7 +6,11 @@ pub_topic = "test/response"  # 발행할 토픽
 
 # 메시지 수신 콜백 함수
 def on_message(client, userdata, message):
-    print(f"Message Received: {message.payload.decode()}")
+	received_message = message.payload.decode()
+	print(f"Message Received from Raspberry Pi: {received_message}")
+
+    # 예시로 응답 메시지 발행
+	response_message = f"Message '{received_message}' received on Mac"
 
 # MQTT 클라이언트 생성 및 브로커 연결
 client = mqtt.Client()
