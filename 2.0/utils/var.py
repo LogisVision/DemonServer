@@ -1,0 +1,7 @@
+sub_topic = "test/response"
+pub_topic = "test/topic"
+status_request_topic = "jeston/request_status"
+status_response_topic = "jeston/status_response"
+jetson_status = "unknown"
+robot_type = "B"
+is_requested = "request"
