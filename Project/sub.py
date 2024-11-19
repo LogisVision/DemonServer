@@ -39,3 +39,4 @@ try:
 finally:
     client.loop_stop()
     client.disconnect()
+
