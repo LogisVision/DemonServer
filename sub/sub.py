@@ -12,16 +12,18 @@ status_response_topic = "jetson/status_response"
 jetson_status = "idle"
 # 메시지 수신 콜백 함수
 def on_message(client, userdata, message):
-	if message.topic == status_request_topic:
-		client.publish(status_response_topic, jetson_status)
-		print("request accepted")
+    global jetson_status
+    if message.topic == status_request_topic:
+        print(jetson_status)
+        client.publish(status_response_topic, jetson_status)
+        print("request accepted")
 
-	elif message.topic == sub_topic:
-		json_data= message.payload.decode("utf-8")
-		received_message = json.loads(json_data)
-		print(type(received_message))
-		print(f"Message Received from Raspberry Pi: {received_message}")
-		response_message = f"Message '{received_message}' received on Mac"
+    elif message.topic == sub_topic:
+        json_data= message.payload.decode("utf-8")
+        received_message = json.loads(json_data)
+        print(type(received_message))
+        print(f"Message Received from Raspberry Pi: {received_message}")
+        response_message = f"Message '{received_message}' received on Mac"
 
     # 예시로 응답 메시지 발행
 
@@ -43,8 +45,13 @@ try:
         message = input("Enter message to publish (or type 'exit' to quit): ")
         if message.lower() == "exit":
             break
-        client.publish(pub_topic, message)
-        print(f"Message '{message}' sent to topic '{pub_topic}'")
+
+        jetson_status = message
+        print(f"Status : {jetson_status}")
+
+except Exception as e:
+    print(e)
+
 
 finally:
     client.loop_stop()
