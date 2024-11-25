@@ -20,8 +20,6 @@
 ## 기본 디렉토리
 ### main.py
 - utils에 존재하는 모듈 함수들을 호출하여 실행하는 역할을 하는 python 파일
-### var.py
-- main.py에서 구동할 때 필요한 mqtt 주소 같은 변수들을 저장할 파일
 
 ## utils 디렉토리
 ### firebase_handler.py
