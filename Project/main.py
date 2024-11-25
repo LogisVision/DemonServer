@@ -2,6 +2,8 @@ from utils.mqtt_handler import MQTTHandler
 from utils.firebase_handler import FirebaseHandler
 from utils.chatgpt_logger_analyzer import LogAnalyzer
 from utils.logger import Logger
+from datetime import datetime, timezone, timedelta
+import pytz
 import time
 
 def main_loop():
@@ -21,6 +23,7 @@ def main_loop():
     collection_name = "commands"
     robots = {"A", "B"}
     is_requested = "request"
+    local_tz = pytz.timezone('Asia/Seoul')
     
 
     # 명령 메시지 예시
@@ -41,9 +44,9 @@ def main_loop():
     Logger().info("mqtt_hander is set")
 
     log_analyzer = LogAnalyzer()
+    last_summary_time = datetime.now(local_tz)
                               
-    last_summary_time = time.time()
-    log_summary_interval = 7
+    log_summary_interval = 60
     log_path = "./app.log"
 
     while True:
@@ -76,22 +79,25 @@ def main_loop():
                 else:
                     Logger().warning("No data matching the criteria was found.")
 
-            current_time = time.time()
-            if current_time - last_summary_time >= log_summary_interval:
-                log_data = log_analyzer.read_log_file(log_path, log_summary_interval)
+            current_time = datetime.now(local_tz)
+
+            if current_time - last_summary_time >= timedelta(seconds=log_summary_interval):
+                log_data = log_analyzer.read_log_file(log_path, last_summary_time, current_time)
+                print(log_data)
                 Logger().info("Perfoming log summary...")
 # 로그 데이터가 존재할 때
                 if log_data:
                     response_content = log_analyzer.summarize_logs(log_data)
 					# json 형태로 정리(dict)
-                    json_summary = log_analyzer.save_response_to_json(response_content)
-                    firebase_handler.upload_summary(summary)
-                    Logger.info("Log summary completed and uploaded")
+                    log_data = log_analyzer.save_response_to_json(response_content)
+                    firebase_handler.upload_logs_with_timestamps(log_data, "logs")
+                    Logger().info("Log summary completed and uploaded")
                 else:
                     Logger().warning("No logs available for summarization")
+
                 last_summary_time = current_time
 
-            Logger().info("Retrying in 5 seconds...")
+            Logger().debug("Retrying in 5 seconds...")
             time.sleep(5)  # 유지
     except KeyboardInterrupt:
         Logger().critical("\nProgram interrupted by user.")

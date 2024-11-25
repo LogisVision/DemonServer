@@ -1,8 +1,9 @@
 import firebase_admin
+import pytz
+import time
 from firebase_admin import credentials, firestore
 from .logger import Logger
 from datetime import datetime
-
 
 class FirebaseHandler:
     def __init__(self, credential_path, collection_name):
@@ -127,7 +128,7 @@ class FirebaseHandler:
             
             print(f"Data successfully uploaded to Firestore collection: {collection_name}")
         except Exception as e:
-            print(f"Error uploading data to Firestore: {e}")
+            Logger().error(f"Error uploading data to Firestore: {e}")
 
 
     def to_progress(self, command_id):
@@ -172,6 +173,48 @@ class FirebaseHandler:
             return []
 
 
+    def upload_logs_with_timestamps(self, log_data, collection_name):
+        """
+        주어진 로그 데이터를 Firestore에 업로드하며, time_range 내 날짜를 Timestamp로 변환.
+
+        Args:
+        log_data (dict): Firestore에 업로드할 데이터 딕셔너리.
+        collection_name (str): Firestore 컬렉션 이름.
+        document_name (str): Firestore 문서 이름.
+        """
+        try:
+                # 날짜 문자열을 datetime으로 변환 후 Timestamp로 변환
+            datetime_range = log_data.get('datetime_range', {})
+            start_time_str = datetime_range.get('start')
+            end_time_str = datetime_range.get('end')
+
+            print(f"start time : {start_time_str}")
+            print(f"end time : {end_time_str}")
+            # 문자열을 datetime으로 변환 (포맷: "Month-Day-Year")
+            local_tz = pytz.timezone('Asia/Seoul')
+            start_time = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=local_tz).astimezone(pytz.utc) if start_time_str else None
+            
+            end_time = datetime.strptime(end_time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=local_tz).astimezone(pytz.utc) if end_time_str else None
+
+            print(start_time)
+            print(end_time)
+            # Firestore Timestamp로 변환
+            if start_time:
+                log_data['datetime_range']['start'] = start_time
+            if end_time:
+                log_data['datetime_range']['end'] = end_time
+
+            # Firestore에 데이터 업로드
+            '''
+            doc_ref = self.db.collection(collection_name).document(document_name)
+            doc_ref.set(log_data)
+            '''
+            doc_ref = self.db.collection(collection_name).add(log_data)
+            print(f"Logs successfully uploaded to Firestore: {collection_name}")
+
+        except Exception as e:
+            Logger().info(f"Error uploading logs to Firestore: {e}")
+'''
     def upload_logs_with_timestamps(log_data, collection_name, document_name):
 """
 주어진 로그 데이터를 Firestore에 업로드하며, time_range 내 날짜를 Timestamp로 변환.
@@ -204,3 +247,4 @@ document_name (str): Firestore 문서 이름.
 
         except Exception as e:
         print(f"Error uploading logs to Firestore: {e}")
+'''
